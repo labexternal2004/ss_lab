@@ -1,0 +1,60 @@
+
+input files
+Input.txt
+
+** START 2000
+** LDA FIVE
+** STA ALPHA
+** LDCH CHARZ
+** STCH C1
+ALPHA RESW 1
+FIVE WORD 5
+CHARZ BYTE C'Z'
+C1 RESB 1 
+** END
+
+
+opcode.txt
+
+START *
+LDA 03
+STA 0F
+LDCH 53
+STCH 57
+END
+
+Output files
+
+Output.txt
+
+            PRGM.     START.        2000
+2000.    **.           LDA.            FIVE
+
+2003.    **.           STA.            ALPHA
+
+2006.    **.           LDCH.         CHARZ  
+
+2009.    **.           STCH.          C1
+
+200C.    ALPHA.   RESW.          1
+
+200F.     FIVE.       WORD.          5
+
+2012.     CHARZ.   BYTE.          C'ZY'
+
+2014.      C1.           RESB.          1
+
+
+
+symtab.txt
+
+
+200C.     ALPHA
+
+200F.      FIVE
+
+2012.      CHARZ
+
+2014.      C1
+
+	
