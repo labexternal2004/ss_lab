@@ -1,0 +1,33 @@
+/******************************************************************************
+
+                            Online C Compiler.
+                Code, Compile, Run and Debug C program online.
+Write your code in this editor and press "Run" button to compile and execute it.
+
+*******************************************************************************/
+
+#include <stdio.h>
+#include<stdlib.h>
+
+int main()
+{
+    int n,req[100],initial,thm=0;
+    printf("enter the number of request:");
+    scanf("%d",&n);
+    printf("enter the sequence:");
+    for(int i=0;i<n;i++)
+    {
+        scanf("%d",&req[i]);
+    }
+    printf("enter the initial head position:");
+    scanf("%d",&initial);
+     printf("Sequence of disk head movement: ");
+    for (int i = 0; i < n; i++) {
+        printf("%d -> ", initial);
+        thm = thm + abs(req[i] - initial);
+        initial = req[i];
+    }
+   printf("%d\n", initial);
+    printf("total headmovement=%d",thm);
+    return 0;
+}
