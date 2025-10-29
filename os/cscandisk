@@ -1,0 +1,101 @@
+#include <stdlib.h>
+#include <stdio.h>
+
+int main() {
+    int n, disk_size, initial_position, direction;
+    printf("Enter disk size: ");
+    scanf("%d", &disk_size);
+    printf("Enter number of requests: ");
+    scanf("%d", &n);
+    int queue[n];
+    printf("Enter requests: ");
+    for (int i = 0; i < n; i++) scanf("%d", &queue[i]);
+    printf("Enter initial position: ");
+    scanf("%d", &initial_position);
+    printf("Enter direction (0 for left, 1 for right): ");
+    scanf("%d", &direction);
+
+    // Sort the request queue
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (queue[i] > queue[j]) {
+                int temp = queue[i];
+                queue[i] = queue[j];
+                queue[j] = temp;
+            }
+        }
+    }
+
+    int total_distance = 0;
+    int current_position = initial_position;
+    printf("Request sequence: %d ", initial_position);
+
+    int left[n], right[n];
+    int l = 0, r = 0;
+
+    // Separate requests into left and right of the initial position
+    for (int i = 0; i < n; i++) {
+        if (queue[i] < initial_position) {
+            left[l++] = queue[i];
+        } else {
+            right[r++] = queue[i];
+        }
+    }
+
+    if (direction == 1) { // Moving right
+        // Service requests to the right
+        for (int i = 0; i < r; i++) {
+            total_distance += abs(right[i] - current_position);
+            current_position = right[i];
+            printf("-> %d ", current_position);
+        }
+
+        // Move to the end of the disk
+       // if (current_position != disk_size - 1) {
+           // total_distance += abs(disk_size - 1 - current_position);
+           // current_position = disk_size - 1;
+          //  printf("-> %d ", current_position);
+       // }
+
+        // Jump to the start of the disk
+       // total_distance += abs(disk_size - 1 - 0);
+        //current_position = 0;
+       // printf("-> %d ", current_position);
+
+        // Service requests to the left
+        for (int i = 0; i < l; i++) {
+            total_distance += abs(left[i] - current_position);
+            current_position = left[i];
+            printf("-> %d ", current_position);
+        }
+    } else { // Moving left
+        // Service requests to the left
+        for (int i = l - 1; i >= 0; i--) {
+            total_distance += abs(left[i] - current_position);
+            current_position = left[i];
+            printf("-> %d ", current_position);
+        }
+
+        // Move to the start of the disk
+        if (current_position != 0) {
+            total_distance += abs(current_position - 0);
+            current_position = 0;
+            printf("-> %d ", current_position);
+        }
+
+        // Jump to the end of the disk
+        total_distance += abs(disk_size - 1 - 0);
+        current_position = disk_size - 1;
+        printf("-> %d ", current_position);
+
+        // Service requests to the right
+        for (int i = r - 1; i >= 0; i--) {
+            total_distance += abs(right[i] - current_position);
+            current_position = right[i];
+            printf("-> %d ", current_position);
+        }
+    }
+
+    printf("\nTotal head movement: %d\n", total_distance);
+    return 0;
+}
