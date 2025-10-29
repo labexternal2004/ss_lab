@@ -1,159 +1,124 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-int main() {
-    char opcode[20], operand[20], label[20], code[20], mnemonic_hex[25];
-    char symbol[20], object_code[100];
-    int locctr, start_addr = 0, prog_len = 0, sym_addr, flag, flag1;
-    char text_buffer[200], temp_buffer[20], prog_name[20];
-    int text_len = 0, text_start_addr = 0;
+#include<stdio.h>
+#include<string.h>
 
-    FILE *fp1, *fp4, *fp5, *fp2, *fp3;
-    fp1 = fopen("output.txt", "r");
-    fp2 = fopen("opcode.txt", "r");
-    fp3 = fopen("symtab.txt", "r");
-    fp4 = fopen("objprog.txt", "w");
-    fp5 = fopen("twoout.txt", "w");
+int findAddress(int op){
+	FILE *INTERMEDIATE;
+	char opcode[22],operand[33],label[43],address[10];
+	int finalAddress=0,count=0,start;
+	INTERMEDIATE=fopen("output.dat","r");
+	fscanf(INTERMEDIATE,"%s%s%s",label,opcode,operand);
+	start=atoi(operand);
+	while(strcmp(opcode,"END")!=0){
+		fscanf(INTERMEDIATE,"%s%s%s%s",address,label,opcode,operand);
+		
+		if( strcmp(opcode,"RESW")==0 )
+			count=count+3*atoi(operand);
+		if( strcmp(opcode,"RESB")==0 )
+			count=count+atoi(operand);			
+		finalAddress=atoi(address);
+	}
+	
+	fclose(INTERMEDIATE);
+	if(op==0)
+		return finalAddress;
+	return finalAddress-start-count;
+}
 
-    if (fscanf(fp1, "%s %s %s", label, opcode, operand) == 3) {
-        if (strcmp(opcode, "START") == 0) {
-            strncpy(prog_name, label, 6);
-            prog_name[6] = '\0';
-            sscanf(operand, "%x", &start_addr);
-        } else {
-            strcpy(prog_name, "      ");
-            start_addr = 0;
-            fseek(fp1, 0, SEEK_SET);
-        }
-    }
+//FUNCTIUON TO FIND THE ADDRESS OF LABEL IN SYMTAB
+int findInSYMTAB(char findLabel[]){
+	FILE *SYMTAB;
+	char label[30],addr[30];
+	SYMTAB=fopen("symtab.dat","r");
+	fscanf(SYMTAB,"%s%s",label,addr);
+		
 
-    int last_locctr = 0;
-    char line_buffer[256];
-    fseek(fp1, 0, SEEK_SET);
-    while (fgets(line_buffer, sizeof(line_buffer), fp1) != NULL) {
-        int tmp;
-        if (sscanf(line_buffer, "%x", &tmp) == 1)
-            last_locctr = tmp;
-    }
-    prog_len = last_locctr - start_addr;
+	while(1){
+		if(feof(SYMTAB)){
+			fclose(SYMTAB);
+			break;
+	
+			}
+	
+		if(strcmp(findLabel,label)==0){
+			fclose(SYMTAB);
+			return atoi(addr);
+		}
+		fscanf(SYMTAB,"%s%s",label,addr);
+	}
+}
 
-    fprintf(fp4, "H^%-6s^%06X^%06X\n", prog_name, start_addr, prog_len);
-    printf("H^%-6s^%06X^%06X\n", prog_name, start_addr, prog_len);
+int getMnemonicCode(char mnemonic[]){
+		if(strcmp(mnemonic,"LDA")==0)
+			return 33;
+		else if(strcmp(mnemonic,"STA")==0)
+			return 44;
+		else if(strcmp(mnemonic,"LDCH")==0)
+			return 53;
+		else if(strcmp(mnemonic,"STCH")==0)
+			return 57;
+		else
+			return -1;
+}
 
-    fseek(fp1, 0, SEEK_SET);
+void main(){
+	FILE *INTERMEDIATE,*SYMTAB,*FINAL,*OBJ;
+	int finalAddress=0,length,i,startAddr;
+	char opcode[22],operand[33],label[43],address[10];
+	
+	SYMTAB=fopen("symtab.dat","r");
+	FINAL=fopen("final.dat","w");
+	OBJ=fopen("obj.dat","w");
+	
+	finalAddress=findAddress(0); 
+	
+	INTERMEDIATE=fopen("../resources/PASS1/output.dat","r");
+	fscanf(INTERMEDIATE,"%s%s%s",label,opcode,operand);
+	
+	startAddr=atoi(operand);
+	if( strcmp(opcode,"START")==0){
+		fprintf(FINAL,"%st%st%stn",label,opcode,operand);
+		length=finalAddress-startAddr;
+		
+		fprintf(OBJ,"H^%s^00%s^00%dn",label,operand,length);
+		fscanf(INTERMEDIATE,"%s%s%s%s",address,label,opcode,operand);
+		fprintf(OBJ,"T^%06d^%d^",atoi(address),findAddress(1));
 
-    if (fscanf(fp1, "%s %s %s", label, opcode, operand) == 3) {
-        fprintf(fp5, "%-8s %-8s %-8s\n", label, opcode, operand);
-    } 
-
-    if (fscanf(fp1, "%x %s %s %s", &locctr, label, opcode, operand) != 4) {
-        fprintf(fp4, "E^%06X\n", start_addr);
-        printf("E^%06X\n", start_addr);
-        fclose(fp1); fclose(fp2); fclose(fp3);
-        fclose(fp4); fclose(fp5);
-        return 0;
-    }
-
-    text_start_addr = locctr;
-    text_buffer[0] = '\0';
-    text_len = 0;
-
-    while (1) {
-        if (strcmp(opcode, "END") == 0) {
-            break;
-        }
-
-        object_code[0] = '\0';
-        flag = 0;
-        rewind(fp2);
-        while (fscanf(fp2, "%s %s", code, mnemonic_hex) != EOF) {
-            if (strcmp(opcode, code) == 0) {
-                flag = 1;
-                break;
-            }
-        }
-
-        if (flag == 1) {
-            flag1 = 0;
-            rewind(fp3);
-            while (fscanf(fp3, "%x %s", &sym_addr, symbol) != EOF) {
-                if (strcmp(operand, symbol) == 0) {
-                    flag1 = 1;
-                    break;
-                }
-            }
-            if (flag1 == 1) 
-                sprintf(object_code, "%s%04X", mnemonic_hex, sym_addr);
-            else 
-                strcpy(object_code, "000000");
-        } 
-        else if (strcmp(opcode, "WORD") == 0) {
-            int val = atoi(operand);
-            sprintf(object_code, "%06X", val);
-        } 
-        else if (strcmp(opcode, "BYTE") == 0) {
-            if (operand[0] == 'C' && operand[1] == '\'') {
-                size_t len = strlen(operand);
-                object_code[0] = '\0';
-                for (int i = 2; i < (int)len - 1; i++) {
-                    sprintf(temp_buffer, "%02X", (unsigned char)operand[i]);
-                    strcat(object_code, temp_buffer);
-                }
-            } else if (operand[0] == 'X' && operand[1] == '\'') {
-                size_t len = strlen(operand);
-                size_t n = (len >= 3) ? len - 3 : 0;
-                if (n > 0) {
-                    strncpy(object_code, operand + 2, n);
-                    object_code[n] = '\0';
-                } 
-                else 
-                    object_code[0] = '\0';
-            } 
-            else 
-                object_code[0] = '\0';
-        } 
-        else 
-            object_code[0] = '\0';
-
-        if (strlen(object_code) > 0) {
-            if (text_len + (int)strlen(object_code) > 60) {
-                fprintf(fp4, "T^%06X^%02X^%s\n", text_start_addr, text_len / 2, text_buffer);
-                printf("T^%06X^%02X^%s\n", text_start_addr, text_len / 2, text_buffer);
-                text_buffer[0] = '\0';
-                text_len = 0;
-                text_start_addr = locctr;
-            }
-            if (text_len == 0) {
-                text_start_addr = locctr;
-            }
-            strcat(text_buffer, object_code);
-            text_len += strlen(object_code);            
-        } else if (strcmp(opcode, "RESW") == 0 || strcmp(opcode, "RESB") == 0) {
-            if (text_len > 0) {
-                fprintf(fp4, "T^%06X^%02X^%s\n", text_start_addr, text_len / 2, text_buffer);
-                printf("T^%06X^%02X^%s\n", text_start_addr, text_len / 2, text_buffer);
-                text_buffer[0] = '\0';
-                text_len = 0;
-            }
-
-        }
-        fprintf(fp5, "%-8X %-8s %-8s %-8s %-10s\n", locctr, label, opcode, operand, object_code);
-        if (fscanf(fp1, "%x %s %s %s", &locctr, label, opcode, operand) != 4) {
-            break;
-        }
-    } 
-    if (text_len > 0) {
-        fprintf(fp4, "T^%06X^%02X^%s\n", text_start_addr, text_len / 2, text_buffer);
-        printf("T^%06X^%02X^%s\n", text_start_addr, text_len / 2, text_buffer);
-    }
-    fprintf(fp4, "E^%06X\n", start_addr);
-    printf("E^%06X\n", start_addr);
-
-    fclose(fp1);
-    fclose(fp2);
-    fclose(fp3);
-    fclose(fp4);
-    fclose(fp5);
-    return 0;
+	}
+	
+	while(strcmp(opcode,"END")!=0){
+	
+		if(strcmp(label,"**")==0 ){
+			fprintf(OBJ,"%d%d^",getMnemonicCode(opcode),findInSYMTAB(operand));
+			fprintf(FINAL,"%st%st%st%st%d%dn",address,label,opcode,operand,getMnemonicCode(opcode),findInSYMTAB(operand));
+			fscanf(INTERMEDIATE,"%s%s%s%s",address,label,opcode,operand);
+		}	
+		else if(strcmp(opcode,"BYTE")==0){
+		
+			fprintf(FINAL,"%st%st%st%s",address,label,opcode,operand);
+			for(i=2;i<(strlen(operand)-1);i++){
+				fprintf(OBJ,"%x",operand[i]);
+				fprintf(FINAL,"%x",operand[i]);
+				
+				
+			}	
+		fprintf(FINAL,"n");	
+		fscanf(INTERMEDIATE,"%s%s%s%s",address,label,opcode,operand);		
+					
+		}
+			
+		else if(strcmp(opcode,"WORD")==0){
+			fprintf(OBJ,"%06x^",atoi(operand));
+			fprintf(FINAL,"%st%st%st%st%06xn",address,label,opcode,operand,atoi(operand));		
+			fscanf(INTERMEDIATE,"%s%s%s%s",address,label,opcode,operand);		
+		}	
+		else{
+			fscanf(INTERMEDIATE,"%s%s%s%s",address,label,opcode,operand);
+		}
+			
+	}
+	fprintf(FINAL,"%st%st%st%sn",address,label,opcode,operand);	
+	fprintf(OBJ,"nE^%06dn",startAddr); 
+	
+	
 }
