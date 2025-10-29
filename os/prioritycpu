@@ -1,0 +1,87 @@
+#include <stdio.h>
+
+int main() {
+    int n;
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
+
+    int pid[n], at[n], bt[n], pr[n], ct[n], tat[n], wt[n];
+    int completed[n];
+    int i, j;
+
+    // Input the process details
+    printf("Enter details (PID ArrivalTime BurstTime Priority):\n");
+    for (i = 0; i < n; i++) {
+        scanf("%d %d %d %d", &pid[i], &at[i], &bt[i], &pr[i]);
+        completed[i] = 0;  // mark as not completed
+    }
+
+    // Sort by arrival time (so scheduling in proper arrival order)
+    for (i = 0; i < n-1; i++) {
+        for (j = i+1; j < n; j++) {
+            if (at[i] > at[j]) {
+                // swap arrival time
+                int temp = at[i]; at[i] = at[j]; at[j] = temp;
+                // swap burst time
+                temp = bt[i]; bt[i] = bt[j]; bt[j] = temp;
+                // swap priority
+                temp = pr[i]; pr[i] = pr[j]; pr[j] = temp;
+                // swap pid
+                temp = pid[i]; pid[i] = pid[j]; pid[j] = temp;
+            }
+        }
+    }
+
+    int current_time = 0;
+    int completed_count = 0;
+
+    while (completed_count < n) {
+        int idx = -1;
+        /* 
+         * Here: choose process with *highest priority* among those
+         * arrived (at[i] ≤ current_time) and not completed.
+         * Convention: lower pr[i] = higher priority OR higher number = higher priority.
+         * We must pick one convention; let's assume **lower number means higher priority**.
+         */
+        int best_pr = 1e9;  // large sentinel
+
+        for (i = 0; i < n; i++) {
+            if (!completed[i] && at[i] <= current_time) {
+                if (pr[i] < best_pr) {
+                    best_pr = pr[i];
+                    idx = i;
+                }
+                // if priorities equal, you may tie-break via arrival or PID if needed
+            }
+        }
+
+        if (idx == -1) {
+            // no process ready → advance time
+            current_time++;
+        } else {
+            // schedule process idx
+            ct[idx] = current_time + bt[idx];
+            tat[idx] = ct[idx] - at[idx];
+            wt[idx]  = tat[idx] - bt[idx];
+
+            current_time = ct[idx];
+            completed[idx] = 1;
+            completed_count++;
+        }
+    }
+
+    // Print results
+    int total_tat = 0, total_wt = 0;
+    printf("\nPID\tAT\tBT\tPr\tCT\tTAT\tWT\n");
+    for (i = 0; i < n; i++) {
+        printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+               pid[i], at[i], bt[i], pr[i], ct[i], tat[i], wt[i]);
+        total_tat += tat[i];
+        total_wt  += wt[i];
+    }
+
+    printf("Average Turnaround Time = %.2f\n", (float)total_tat / n);
+    printf("Average Waiting Time    = %.2f\n", (float)total_wt  / n);
+
+    return 0;
+}
