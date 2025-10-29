@@ -1,0 +1,74 @@
+#include <stdio.h>
+
+int main() {
+    int n;
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
+
+    int pid[n], at[n], bt[n], ct[n], tat[n], wt[n];
+    int completed[n];
+    int i, j;
+
+    // Input the process details
+    printf("Enter details (PID ArrivalTime BurstTime):\n");
+    for (i = 0; i < n; i++) {
+        scanf("%d %d %d", &pid[i], &at[i], &bt[i]);
+        completed[i] = 0;  // mark as not completed
+    }
+
+    // Sort by arrival time (so we schedule in arrival order first)
+    for (i = 0; i < n-1; i++) {
+        for (j = i+1; j < n; j++) {
+            if (at[i] > at[j]) {
+                // swap arrival time
+                int temp = at[i]; at[i] = at[j]; at[j] = temp;
+                // swap burst time
+                temp = bt[i]; bt[i] = bt[j]; bt[j] = temp;
+                // swap pid
+                temp = pid[i]; pid[i] = pid[j]; pid[j] = temp;
+            }
+        }
+    }
+
+    int current_time = 0;
+    int completed_count = 0;
+    while (completed_count < n) {
+        int idx = -1;
+        int min_bt = 1e9;
+        // find process with smallest burst time among arrived & not completed
+        for (i = 0; i < n; i++) {
+            if (!completed[i] && at[i] <= current_time && bt[i] < min_bt) {
+                min_bt = bt[i];
+                idx = i;
+            }
+        }
+
+        if (idx == -1) {
+            // no process available to run yet, advance time
+            current_time++;
+        } else {
+            // schedule process idx
+            ct[idx] = current_time + bt[idx];
+            tat[idx] = ct[idx] - at[idx];
+            wt[idx] = tat[idx] - bt[idx];
+            current_time = ct[idx];
+            completed[idx] = 1;
+            completed_count++;
+        }
+    }
+
+    // Print results
+    int total_tat = 0, total_wt = 0;
+    printf("\nPID\tAT\tBT\tCT\tTAT\tWT\n");
+    for (i = 0; i < n; i++) {
+        printf("%d\t%d\t%d\t%d\t%d\t%d\n",
+               pid[i], at[i], bt[i], ct[i], tat[i], wt[i]);
+        total_tat += tat[i];
+        total_wt += wt[i];
+    }
+
+    printf("Average Turnaround Time = %.2f\n", (float)total_tat / n);
+    printf("Average Waiting Time    = %.2f\n", (float)total_wt / n);
+
+    return 0;
+}
