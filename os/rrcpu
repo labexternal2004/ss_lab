@@ -1,0 +1,87 @@
+#include <stdio.h>
+
+int main() {
+    int n, q;
+    
+    // Take the number of processes and time quantum as input
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
+    printf("Enter time quantum: ");
+    scanf("%d", &q);
+
+    int pid[n], at[n], bt[n], rt[n], ct[n], wt[n], tat[n];
+
+    // Input process details: PID, Arrival Time, Burst Time
+    printf("Enter process details (PID, Arrival Time, Burst Time):\n");
+    for (int i = 0; i < n; i++) {
+        scanf("%d %d %d", &pid[i], &at[i], &bt[i]);
+        rt[i] = bt[i];  // Initialize remaining burst time with burst time
+    }
+
+    // Sort the processes based on Arrival Time
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (at[i] > at[j]) {
+                // Swap Arrival Time
+                int temp = at[i];
+                at[i] = at[j];
+                at[j] = temp;
+
+                // Swap Burst Time accordingly
+                temp = bt[i];
+                bt[i] = bt[j];
+                bt[j] = temp;
+
+                // Swap Remaining Time accordingly
+                temp = rt[i];
+                rt[i] = rt[j];
+                rt[j] = temp;
+
+                // Swap PID accordingly
+                temp = pid[i];
+                pid[i] = pid[j];
+                pid[j] = temp;
+            }
+        }
+    }
+
+    int t = 0;  // Current time
+    int rp = n;  // Remaining processes to execute
+
+    // Execute the processes in a Round Robin manner
+    while (rp > 0) {
+        int done = 0;  // Flag to check if a process ran during this iteration
+        for (int i = 0; i < n; i++) {
+            if (rt[i] > 0 && at[i] <= t) {  // If process has arrived and is not completed
+                done = 1;
+                if (rt[i] <= q) {  // If the remaining burst time is less than or equal to time quantum
+                    t += rt[i];
+                    rt[i] = 0;
+                    ct[i] = t;  // Completion time
+                    rp--;  // Process is now complete
+                } else {  // Process needs more time
+                    t += q;
+                    rt[i] -= q;  // Reduce remaining burst time
+                }
+            }
+        }
+        
+        if (!done) {  // If no process could run, increment time
+            t++;
+        }
+    }
+
+    // Calculate Turnaround Time (TAT) and Waiting Time (WT)
+    for (int i = 0; i < n; i++) {
+        tat[i] = ct[i] - at[i];  // Turnaround time = Completion time - Arrival time
+        wt[i] = tat[i] - bt[i];  // Waiting time = Turnaround time - Burst time
+    }
+
+    // Display the process details
+    printf("\nRound Robin Scheduling:\nPID AT BT CT TAT WT\n");
+    for (int i = 0; i < n; i++) {
+        printf("%d %d %d %d %d %d\n", pid[i], at[i], bt[i], ct[i], tat[i], wt[i]);
+    }
+
+    return 0;
+}
