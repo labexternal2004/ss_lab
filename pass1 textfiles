@@ -28,33 +28,33 @@ Output files
 Output.txt
 
             PRGM.     START.        2000
-2000.    **.           LDA.            FIVE
+2000    **.           LDA.            FIVE
 
-2003.    **.           STA.            ALPHA
+2003    **.           STA.            ALPHA
 
-2006.    **.           LDCH.         CHARZ  
+2006    **.           LDCH.         CHARZ  
 
-2009.    **.           STCH.          C1
+2009    **.           STCH.          C1
 
-200C.    ALPHA.   RESW.          1
+200C    ALPHA.   RESW.          1
 
-200F.     FIVE.       WORD.          5
+200F     FIVE.       WORD.          5
 
-2012.     CHARZ.   BYTE.          C'ZY'
+2012     CHARZ.   BYTE.          C'ZY'
 
-2014.      C1.           RESB.          1
+2014      C1.           RESB.          1
 
 
 
 symtab.txt
 
 
-200C.     ALPHA
+200C     ALPHA
 
-200F.      FIVE
+200F      FIVE
 
-2012.      CHARZ
+2012      CHARZ
 
-2014.      C1
+2014      C1
 
 	
